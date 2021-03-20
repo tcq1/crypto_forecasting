@@ -2,6 +2,7 @@ import pandas as pd
 import datetime
 
 from binance.client import Client
+from timeit import default_timer as timer
 
 
 def get_api_information(file_path):
@@ -49,6 +50,28 @@ def last_close_time_before_now(df):
     return now > df.iloc[-1]['close_time']
 
 
+def kline_intervals():
+    """ Dictionary containing all intervals and their respective minute values.
+
+    :return: dictionary
+    """
+    return {Client.KLINE_INTERVAL_1MINUTE: 1,
+            Client.KLINE_INTERVAL_3MINUTE: 3,
+            Client.KLINE_INTERVAL_5MINUTE: 5,
+            Client.KLINE_INTERVAL_15MINUTE: 15,
+            Client.KLINE_INTERVAL_30MINUTE: 30,
+            Client.KLINE_INTERVAL_1HOUR: 60,
+            Client.KLINE_INTERVAL_2HOUR: 120,
+            Client.KLINE_INTERVAL_4HOUR: 240,
+            Client.KLINE_INTERVAL_6HOUR: 360,
+            Client.KLINE_INTERVAL_8HOUR: 480,
+            Client.KLINE_INTERVAL_12HOUR: 720,
+            Client.KLINE_INTERVAL_1DAY: 1440,
+            Client.KLINE_INTERVAL_3DAY: 4320,
+            Client.KLINE_INTERVAL_1WEEK: 10080,
+            Client.KLINE_INTERVAL_1MONTH: 40320}
+
+
 def calculate_next_timestamp(last_stamp, interval):
     """ Calculate the next time stamp.
 
@@ -56,23 +79,7 @@ def calculate_next_timestamp(last_stamp, interval):
     :param interval: Binance interval
     :return: timestamp
     """
-    intervals = {Client.KLINE_INTERVAL_1MINUTE: 1,
-                 Client.KLINE_INTERVAL_3MINUTE: 3,
-                 Client.KLINE_INTERVAL_5MINUTE: 5,
-                 Client.KLINE_INTERVAL_15MINUTE: 15,
-                 Client.KLINE_INTERVAL_30MINUTE: 30,
-                 Client.KLINE_INTERVAL_1HOUR: 60,
-                 Client.KLINE_INTERVAL_2HOUR: 120,
-                 Client.KLINE_INTERVAL_4HOUR: 240,
-                 Client.KLINE_INTERVAL_6HOUR: 360,
-                 Client.KLINE_INTERVAL_8HOUR: 480,
-                 Client.KLINE_INTERVAL_12HOUR: 720,
-                 Client.KLINE_INTERVAL_1DAY: 1440,
-                 Client.KLINE_INTERVAL_3DAY: 4320,
-                 Client.KLINE_INTERVAL_1WEEK: 10080,
-                 Client.KLINE_INTERVAL_1MONTH: 40320}
-
-    return last_stamp + intervals[interval] * 60000
+    return last_stamp + kline_intervals()[interval] * 60000
 
 
 def get_all_candles(client, symbol, interval, start_date):
@@ -108,15 +115,20 @@ def main():
     # initialize client
     client = Client(api_key, api_secret)
 
-    # define symbol and interval
+    # define symbol
     symbol = 'BTCUSDT'
-    interval = Client.KLINE_INTERVAL_15MINUTE
 
-    # get data
-    df = get_all_candles(client, symbol, interval,
-                         client._get_earliest_valid_timestamp(symbol, interval))
-    # store data
-    df.to_csv(f'../output/dataframes/{symbol}_{interval}.csv')
+    # iterate over all intervals
+    for interval in kline_intervals().keys():
+        start_time = timer()
+
+        # get data
+        df = get_all_candles(client, symbol, interval,
+                             client._get_earliest_valid_timestamp(symbol, interval))
+
+        # store data
+        df.to_csv(f'../output/dataframes/{symbol}_{interval}.csv')
+        print(f'Done with interval {interval} after {timer() - start_time}s.')
 
 
 if __name__ == '__main__':
