@@ -127,7 +127,7 @@ def main():
                              client._get_earliest_valid_timestamp(symbol, interval))
 
         # store data
-        df.to_csv(f'../output/dataframes/{symbol}_{interval}.csv')
+        df.to_csv(f'../output/dataframes/{symbol}_{interval[-1]}_{interval[:-1]}.csv', index=False)
         print(f'Done with interval {interval} after {timer() - start_time}s.')
 
 
