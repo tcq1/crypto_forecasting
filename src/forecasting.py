@@ -97,7 +97,7 @@ def test_on_current_data(model, mean, std, path):
 
 
 def main():
-    file_path = '../output/dataframes/BTCUSDT_m_15.csv'
+    file_path = '../output/dataframes/BTCUSDT/BTCUSDT_m_15.csv'
     df = pd.read_csv(file_path, sep=',', dtype=float)
 
     # select features (currently all features)
