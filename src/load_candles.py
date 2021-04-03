@@ -1,5 +1,6 @@
 import pandas as pd
 import datetime
+import os
 
 from binance.client import Client
 from timeit import default_timer as timer
@@ -119,6 +120,8 @@ def main():
     # define symbol
     symbol = 'BTCUSDT'
 
+    output_dir = f'../output/dataframes/{symbol}'
+
     # iterate over all intervals
     for interval in kline_intervals().keys():
         start_time = timer()
@@ -128,13 +131,24 @@ def main():
                              client._get_earliest_valid_timestamp(symbol, interval))
 
         # append moving averages
-        df['ma_7'] = calc_moving_average(df['close'], 7)
-        df['ma_30'] = calc_moving_average(df['close'], 30)
-        df['ma_100'] = calc_moving_average(df['close'], 100)
+        # df['ma_7'] = calc_moving_average(df['close'], 7)
+        # df['ma_30'] = calc_moving_average(df['close'], 30)
+        # df['ma_100'] = calc_moving_average(df['close'], 100)
 
         # store data
-        df.to_csv(f'../output/dataframes/{symbol}/{symbol}_{interval[-1]}_{interval[:-1]}.csv', index=False)
+        df.to_csv(f'{output_dir}/{symbol}_{interval[-1]}_{interval[:-1]}.csv', index=False)
         print(f'Done with interval {interval} after {timer() - start_time}s.')
+
+    for file in os.scandir(output_dir):
+        path = file.path.replace('\\', '/')
+        df = pd.read_csv(path, dtype=float)
+        try:
+            df['ma_7'] = calc_moving_average(df['close'], 7)
+            df['ma_30'] = calc_moving_average(df['close'], 30)
+            df['ma_100'] = calc_moving_average(df['close'], 100)
+        except IndexError:
+            print(f'Couldn\'t add moving averages to {path} since there were not enough candles!')
+        df.to_csv(path)
 
 
 if __name__ == '__main__':
