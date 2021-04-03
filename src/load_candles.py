@@ -4,6 +4,8 @@ import datetime
 from binance.client import Client
 from timeit import default_timer as timer
 
+from src.add_features import calc_moving_average
+
 
 def get_api_information(file_path):
     """ Get binance api key and api secret
@@ -55,8 +57,7 @@ def kline_intervals():
 
     :return: dictionary
     """
-    return {Client.KLINE_INTERVAL_1MINUTE: 1,
-            Client.KLINE_INTERVAL_3MINUTE: 3,
+    return {Client.KLINE_INTERVAL_3MINUTE: 3,
             Client.KLINE_INTERVAL_5MINUTE: 5,
             Client.KLINE_INTERVAL_15MINUTE: 15,
             Client.KLINE_INTERVAL_30MINUTE: 30,
@@ -126,8 +127,13 @@ def main():
         df = get_all_candles(client, symbol, interval,
                              client._get_earliest_valid_timestamp(symbol, interval))
 
+        # append moving averages
+        df['ma_7'] = calc_moving_average(df['close'], 7)
+        df['ma_30'] = calc_moving_average(df['close'], 30)
+        df['ma_100'] = calc_moving_average(df['close'], 100)
+
         # store data
-        df.to_csv(f'../output/dataframes/{symbol}_{interval[-1]}_{interval[:-1]}.csv', index=False)
+        df.to_csv(f'../output/dataframes/{symbol}/{symbol}_{interval[-1]}_{interval[:-1]}.csv', index=False)
         print(f'Done with interval {interval} after {timer() - start_time}s.')
 
 
