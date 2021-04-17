@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import autokeras as ak
 
+from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
-
-from src.generate_data import get_samples, calculate_next_closing_price
-
+from src.generate_data import get_samples, calculate_next_closing_price, calculate_change_label, calculate_up_down_label
 from timeit import default_timer as timer
 
 
@@ -57,12 +56,13 @@ def main():
     # paths
     # path to time series
     time_series_path = '../output/dataframes/BTCUSDT/BTCUSDT_m_15.csv'
-    # model output path
-    model_path = '../output/models/model.h5'
+    # output paths
+    model_dir = '../output/models/model2'
+    model_path = f'{model_dir}/model.h5'
 
     # data settings
     # number of candles to use as features
-    feature_length = 25
+    feature_length = 50
     # number of candles to predict
     output_length = 1
     # share of training data from all samples
@@ -80,6 +80,10 @@ def main():
 
     # normalize data
     x_train, mean, std = normalize_data(x_train)
+    # store mean and std
+    np.save(f'{model_dir}/mean', mean)
+    np.save(f'{model_dir}/std', std)
+
     x_test = normalize_data(x_test, mean, std)[0]
 
     # flatten features
@@ -89,14 +93,18 @@ def main():
     start_time = timer()
 
     # get model
-    model = ak.StructuredDataRegressor(max_trials=max_trials)
-    model.fit(x_train, y_train)
-
-    print(f'Evaluation: {model.evaluate(x_test, y_test)}')
+    if label == calculate_up_down_label:
+        search = ak.StructuredDataClassifier(max_trials=max_trials, overwrite=True, loss='accuracy')
+    else:
+        search = ak.StructuredDataRegressor(max_trials=max_trials, overwrite=True, metrics=['mean_absolute_error'])
+    search.fit(x=x_train, y=y_train, validation_data=[x_test, y_test])
 
     print(f'Done getting model after {timer() - start_time}s!')
 
-    model = model.export_model()
+    model = search.export_model()
+    model.summary()
+    print(f'Evaluation: {model.evaluate(x_test, y_test)}')
+
     model.save(model_path)
     print(f'Model saved in {model_path}')
 
