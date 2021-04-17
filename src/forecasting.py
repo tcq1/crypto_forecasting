@@ -198,7 +198,7 @@ def main():
 
     visualize_loss(history, "Training and Validation loss")
 
-    model = load_model('../output/models/model.h5')
+    model = load_model('../output/models/model/model.h5')
 
     counter = 0
     for x, y in testing_dataset.take(10):
