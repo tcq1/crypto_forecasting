@@ -109,6 +109,22 @@ def get_all_candles(client, symbol, interval, start_date):
     return df
 
 
+def add_ma(df):
+    """ Add moving averages to df
+
+    :param df: candle data
+    :return: df
+    """
+    try:
+        df['ma_7'] = calc_moving_average(df['close'], 7)
+        df['ma_30'] = calc_moving_average(df['close'], 30)
+        df['ma_100'] = calc_moving_average(df['close'], 100)
+    except IndexError:
+        print(f'Couldn\'t add moving averages since there were not enough candles!')
+
+    return df
+
+
 def main():
     # get api information
     api_file_path = 'api_key'
@@ -138,13 +154,8 @@ def main():
     for file in os.scandir(output_dir):
         path = file.path.replace('\\', '/')
         df = pd.read_csv(path, dtype=float)
-        try:
-            df['ma_7'] = calc_moving_average(df['close'], 7)
-            df['ma_30'] = calc_moving_average(df['close'], 30)
-            df['ma_100'] = calc_moving_average(df['close'], 100)
-        except IndexError:
-            print(f'Couldn\'t add moving averages to {path} since there were not enough candles!')
-        df.to_csv(path)
+        df = add_ma(df)
+        df.to_csv(path, index=False)
 
 
 if __name__ == '__main__':
