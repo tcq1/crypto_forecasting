@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import autokeras as ak
 
-from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
-from src.generate_data import get_samples, calculate_next_closing_price, calculate_change_label, calculate_up_down_label
+
+from src.add_features import prepare_features
+from src.generate_data import get_samples, calculate_next_closing_price, calculate_up_down_label
 from timeit import default_timer as timer
 
 
@@ -20,7 +20,9 @@ def get_datasets(time_series_path, feature_length, output_length, train_size, la
     :return: x_train, x_test, y_train, y_test
     """
     # load time series
-    time_series = pd.read_csv(time_series_path)
+    time_series = pd.read_csv(time_series_path, dtype=float)
+
+    time_series = prepare_features(time_series)
 
     # extract samples
     features, labels = get_samples(time_series, feature_length, output_length, label_function)
@@ -57,7 +59,7 @@ def main():
     # path to time series
     time_series_path = '../output/dataframes/BTCUSDT/BTCUSDT_m_15.csv'
     # output paths
-    model_dir = '../output/models/model2'
+    model_dir = '../output/models/model'
     model_path = f'{model_dir}/model.h5'
 
     # data settings
