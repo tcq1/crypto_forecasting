@@ -1,11 +1,8 @@
 import pandas as pd
 import datetime
-import os
 
 from binance.client import Client
 from timeit import default_timer as timer
-
-from src.add_features import calc_moving_average
 
 
 def get_api_information(file_path):
@@ -109,22 +106,6 @@ def get_all_candles(client, symbol, interval, start_date):
     return df
 
 
-def add_ma(df):
-    """ Add moving averages to df
-
-    :param df: candle data
-    :return: df
-    """
-    try:
-        df['ma_7'] = calc_moving_average(df['close'], 7)
-        df['ma_30'] = calc_moving_average(df['close'], 30)
-        df['ma_100'] = calc_moving_average(df['close'], 100)
-    except IndexError:
-        print(f'Couldn\'t add moving averages since there were not enough candles!')
-
-    return df
-
-
 def main():
     # get api information
     api_file_path = 'api_key'
@@ -149,13 +130,6 @@ def main():
         # store data
         df.to_csv(f'{output_dir}/{symbol}_{interval[-1]}_{interval[:-1]}.csv', index=False)
         print(f'Done with interval {interval} after {timer() - start_time}s.')
-
-    # add moving averages
-    for file in os.scandir(output_dir):
-        path = file.path.replace('\\', '/')
-        df = pd.read_csv(path, dtype=float)
-        df = add_ma(df)
-        df.to_csv(path, index=False)
 
 
 if __name__ == '__main__':
